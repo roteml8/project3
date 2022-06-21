@@ -48,6 +48,11 @@ public class Room {
 	public void setHasBath(boolean hasBath) {
 		this.hasBath = hasBath;
 	}
+
+	@Override
+	public String toString() {
+		return "Room [id=" + id + ", number=" + number + ", hasBath=" + hasBath + "]";
+	}
 	
 	
 

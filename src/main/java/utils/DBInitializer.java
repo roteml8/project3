@@ -14,6 +14,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertManyResult;
 
+import crud.ReservationDAO;
 import models.Address;
 import models.Customer;
 import models.Hotel;
@@ -71,7 +72,7 @@ public class DBInitializer {
 
 	}
 	
-	public static InsertManyResult createOrdersCollection(MongoDatabase DB)
+	public static void createOrdersCollection(MongoDatabase DB)
 	{
 		ObjectId hermosoId = new ObjectId("62b1f06f1e06fe398fb667de");
 		ObjectId lindoId = new ObjectId("62b1f06f1e06fe398fb667dd");
@@ -85,7 +86,10 @@ public class DBInitializer {
 		Order order1 = new Order(hermosoId, cust1Id, today, LocalDate.of(2022, 8, 8), 5, 2);
 		Order order2 = new Order(lindoId, cust2Id, today, LocalDate.of(2023, 1, 1), 2, 2);
 		Order order3 = new Order(belloId, cust3Id, today, LocalDate.of(2022, 9, 13), 7, 3);
-		
+		ReservationDAO dao = new ReservationDAO(DB);
+//		dao.addNewOrder(order1);
+		dao.addNewOrder(order2);
+//		dao.addNewOrder(order3);
 	}
 
 }

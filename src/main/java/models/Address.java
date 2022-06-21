@@ -13,6 +13,11 @@ public class Address {
 		setCity(city);
 		setCountry(country);
 	}
+	
+	public Address()
+	{
+		
+	}
 
 	public String getStreet() {
 		return street;

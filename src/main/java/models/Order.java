@@ -1,6 +1,7 @@
 package models;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
@@ -93,6 +94,33 @@ public class Order {
 
 	public void setTotalPrice(double totalPrice) {
 		this.totalPrice = totalPrice;
+	}
+
+
+	@Override
+	public String toString() {
+		return "Order [id=" + id + ", hotelId=" + hotelId + ", customerId=" + customerId + ", orderDate=" + orderDate
+				+ ", startDate=" + startDate + ", numNights=" + numNights + ", totalPrice=" + totalPrice
+				+ ", numPeople=" + numPeople + "]";
+	}
+
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Order other = (Order) obj;
+		return Objects.equals(id, other.id);
 	}
 	
 

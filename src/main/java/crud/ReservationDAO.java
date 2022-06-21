@@ -10,6 +10,7 @@ import com.mongodb.client.result.InsertOneResult;
 import static com.mongodb.client.model.Updates.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import models.Customer;
@@ -34,37 +35,38 @@ public class ReservationDAO {
 	
 	public Hotel getHotelById(ObjectId id)
 	{
-		Hotel current = hotels.find(Filters.eq("id",id)).first();
+		Hotel current = hotels.find(Filters.eq("_id",id)).first();
 		return current;
 	}
 	
 	public Customer getCustomerById(ObjectId id)
 	{
-		Customer current =  customers.find(Filters.eq("id",id)).first();
+		Customer current =  customers.find(Filters.eq("_id",id)).first();
 		return current;
 	}
 	
-	//TODO
 	public InsertOneResult addNewOrder(Order order)
 	{
 		Hotel theHotel = getHotelById(order.getHotelId());
 		InsertOneResult result = null;
-		if (isHotelAvailable(order.getHotelId(), order.getStartDate()))
+		if (isHotelAvailable(order.getHotelId(), order.getStartDate(), order.getNumPeople()))
 		{
 			order.setTotalPrice(order.getNumNights() * theHotel.getPricePerNight());
 			Bson updateHotel = addToSet("orders", order);
-			hotels.updateOne(Filters.eq("id",theHotel.getId()), updateHotel);
+			hotels.updateOne(Filters.eq("_id",theHotel.getId()), updateHotel);
 			Bson updateCustomer = addToSet("orders", order);
-			customers.updateOne(Filters.eq("id", order.getCustomerId()), updateCustomer);
+			customers.updateOne(Filters.eq("_id", order.getCustomerId()), updateCustomer);
 			result = orders.insertOne(order);
 		}
 
 		return result;
 	}
 	
-	public boolean isHotelAvailable(ObjectId hotelId, LocalDate date)
+	public boolean isHotelAvailable(ObjectId hotelId, LocalDate date, int numPeople)
 	{
 		Hotel theHotel = getHotelById(hotelId);
+		if (theHotel.getName().roomCapacity < numPeople)
+			return false;
 		List<Order> orders = theHotel.getOrders();
 		int numRooms = theHotel.getName().numRooms;
 		int countAvailable = numRooms;
@@ -75,6 +77,27 @@ public class ReservationDAO {
 		}
 		return countAvailable > 0;
 
+	}
+	
+	public List<Order> getOrdersByCustomer(ObjectId customerId)
+	{
+		List<Order> custOrders = orders.find(Filters.eq("customer_id", customerId)).into(new ArrayList<>());
+		return custOrders;
+	}
+	
+	public List<Hotel> getHotelsByCity(String city)
+	{
+		List<Hotel> hotelsInCity = hotels.find(Filters.eq("address.city", city)).into(new ArrayList<>());
+		return hotelsInCity;
+	}
+	
+	public void cancelOrder(ObjectId orderId)
+	{
+		Order theOrder = orders.findOneAndDelete(Filters.eq("_id", orderId));
+		Bson updateHotel = pull("orders", theOrder);
+		hotels.updateOne(Filters.eq("_id", theOrder.getHotelId()), updateHotel);
+		Bson updateCustomer = pull("orders", theOrder);
+		customers.updateOne(Filters.eq("_id", theOrder.getCustomerId()), updateCustomer);
 	}
 
 }

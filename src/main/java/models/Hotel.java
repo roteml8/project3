@@ -81,6 +81,12 @@ public class Hotel {
 	public ObjectId getId() {
 		return id;
 	}
+
+	@Override
+	public String toString() {
+		return "Hotel [id=" + id + ", name=" + name + ", address=" + address + ", rank=" + rank + ", rooms=" + rooms
+				+ ", pricePerNight=" + pricePerNight + ", orders=" + orders + "]";
+	}
 	
 	
 
