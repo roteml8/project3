@@ -9,7 +9,7 @@ import org.bson.types.ObjectId;
 public class Hotel {
 	
 	private ObjectId id;
-	private HotelName name;
+	private HotelProperties name;
 	private Address address;
 	private int rank;
 	private List<Room> rooms;
@@ -22,7 +22,7 @@ public class Hotel {
 		
 	}
 	
-	public Hotel(HotelName name, Address address, int rank, List<Room> rooms, double pricePerNight) {
+	public Hotel(HotelProperties name, Address address, int rank, List<Room> rooms, double pricePerNight) {
 		setName(name);
 		setAddress(address);
 		setRank(rank);
@@ -42,10 +42,10 @@ public class Hotel {
 		this.orders.add(order);
 	}
 	
-	public HotelName getName() {
+	public HotelProperties getName() {
 		return name;
 	}
-	public void setName(HotelName name) {
+	public void setName(HotelProperties name) {
 		this.name = name;
 	}
 	public Address getAddress() {

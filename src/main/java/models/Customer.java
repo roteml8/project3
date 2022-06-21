@@ -16,7 +16,18 @@ public class Customer {
 	private String country;
 	private List<Order> orders;
 	
-	public Customer(String firstName, String lastName, String country, List<Order> orders) {
+	
+	
+	public Customer(ObjectId id, String firstName, String lastName, String country, List<Order> orders) {
+		super();
+		this.id = id;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.country = country;
+		this.orders = orders;
+	}
+
+	public Customer(String firstName, String lastName, String country) {
 		setFirstName(firstName);
 		setLastName(lastName);
 		setCountry(country);
@@ -28,6 +39,10 @@ public class Customer {
 		
 	}
 
+	public void addOrder(Order order)
+	{
+		orders.add(order);
+	}
 	
 	public void setId(ObjectId id) {
 		this.id = id;
