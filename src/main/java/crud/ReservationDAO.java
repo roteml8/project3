@@ -10,7 +10,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.BsonField;
-import com.mongodb.client.model.Filters;
+import static com.mongodb.client.model.Filters.*;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.InsertOneResult;
@@ -71,13 +71,13 @@ public class ReservationDAO {
 	
 	public Hotel getHotelById(ObjectId id)
 	{
-		Hotel current = hotels.find(Filters.eq("_id",id)).first();
+		Hotel current = hotels.find(eq("_id",id)).first();
 		return current;
 	}
 	
 	public Customer getCustomerById(ObjectId id)
 	{
-		Customer current =  customers.find(Filters.eq("_id",id)).first();
+		Customer current =  customers.find(eq("_id",id)).first();
 		return current;
 	}
 	
@@ -86,44 +86,47 @@ public class ReservationDAO {
 		ObjectId hotelId = order.getHotelId();
 		Hotel theHotel = getHotelById(hotelId);
 		InsertOneResult result = null;
-		if (isHotelAvailable(hotelId, order.getStartDate(), order.getNumPeople()))
+		if (isHotelAvailable(hotelId, order.getStartDate(), order.getNumPeople(), order.getNumNights()))
 		{
 			order.setTotalPrice(order.getNumNights() * theHotel.getPricePerNight());
 			result = orders.insertOne(order);
 			ObjectId orderId = result.getInsertedId().asObjectId().getValue();
 			order.setId(orderId);
 			Bson updateHotel = addToSet("orders", order);
-			hotels.updateOne(Filters.eq("_id",hotelId), updateHotel);
+			hotels.updateOne(eq("_id",hotelId), updateHotel);
 			Bson updateCustomer = addToSet("orders", order);
-			customers.updateOne(Filters.eq("_id", order.getCustomerId()), updateCustomer);
+			customers.updateOne(eq("_id", order.getCustomerId()), updateCustomer);
 			
 		}
 
 		return result;
 	}
 	
-	public boolean isHotelAvailable(ObjectId hotelId, LocalDate date, int numPeople)
+	public boolean isHotelAvailable(ObjectId hotelId, LocalDate date, int numPeople, int numNights)
 	{
 		Hotel theHotel = getHotelById(hotelId);
 		if (theHotel.getName().roomCapacity < numPeople) 
 			return false;
 		
 		MongoCollection<Document> orderDocs = DB.getCollection("orders");
+		LocalDate endDate = date.plusDays(numNights);
+
+		Bson match = match(and(eq("hotel_id", hotelId), 
+				or(lte("start_date", date), lt("start_date", endDate))));
 		
-		Bson match = match(Filters.eq("hotel_id", hotelId));
 		Bson project = project(Projections.fields(Projections.excludeId(), 
 				Projections.include("start_date", "num_nights")));
+		
 		AggregateIterable<Document> results = orderDocs.aggregate(Arrays.asList(match, project));
 		
 		int roomsAvailable = theHotel.getName().numRooms;
-
 		for (Document d: results)
 		{
 			Date current = d.getDate("start_date");
-			LocalDate startDate = new java.sql.Date(current.getTime()).toLocalDate();
+			LocalDate currentStartDate = new java.sql.Date(current.getTime()).toLocalDate();
 			int nights = d.getInteger("num_nights");
-			LocalDate endDate = startDate.plusDays(nights);
-			if (startDate.equals(date) || (startDate.isBefore(date) && endDate.isAfter(date)))
+			LocalDate currentEndDate = currentStartDate.plusDays(nights);
+			if (currentStartDate.equals(date) || currentEndDate.isAfter(date) || currentEndDate.isAfter(endDate))
 				roomsAvailable--;
 		}
 		
@@ -133,23 +136,23 @@ public class ReservationDAO {
 	
 	public List<Order> getOrdersByCustomer(ObjectId customerId)
 	{
-		List<Order> custOrders = orders.find(Filters.eq("customer_id", customerId)).into(new ArrayList<>());
+		List<Order> custOrders = orders.find(eq("customer_id", customerId)).into(new ArrayList<>());
 		return custOrders;
 	}
 	
 	public List<Hotel> getHotelsByCity(String city)
 	{
-		List<Hotel> hotelsInCity = hotels.find(Filters.eq("address.city", city)).into(new ArrayList<>());
+		List<Hotel> hotelsInCity = hotels.find(eq("address.city", city)).into(new ArrayList<>());
 		return hotelsInCity;
 	}
 	
 	public void cancelOrder(ObjectId orderId)
 	{
-		Order theOrder = orders.findOneAndDelete(Filters.eq("_id", orderId));
+		Order theOrder = orders.findOneAndDelete(eq("_id", orderId));
 		Bson updateHotel = pull("orders",theOrder);
-		hotels.updateOne(Filters.eq("_id", theOrder.getHotelId()), updateHotel);
+		hotels.updateOne(eq("_id", theOrder.getHotelId()), updateHotel);
 		Bson updateCustomer = pull("orders", theOrder);
-		customers.updateOne(Filters.eq("_id", theOrder.getCustomerId()), updateCustomer);
+		customers.updateOne(eq("_id", theOrder.getCustomerId()), updateCustomer);
 	}
 
 	public void displayHotelsByIncomeDesc()
