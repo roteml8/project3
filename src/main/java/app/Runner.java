@@ -61,7 +61,7 @@ public class Runner {
 //			ObjectId orderToCancel = new ObjectId("62b30702333c284912c3e90d");
 //			dao.cancelOrder(orderToCancel);
 			dao.displayHotelsByIncomeDesc();
-//			dao.displayAllOrdersTotalPrice();
+			dao.displayAllOrdersTotalPrice();
 //			dao.displayTopMostProfitableMonths(3);
 //			ObjectId hotelId = new ObjectId("62b2d654348a7351f52546db");
 //			ObjectId customerId = new ObjectId("62b2d6406ce1bb0bda3f7c68");

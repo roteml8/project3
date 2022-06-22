@@ -127,11 +127,12 @@ public class ReservationDAO {
 			return false;
 		
 		MongoCollection<Document> orderDocs = DB.getCollection("orders");
-		Bson match = match(Filters.eq("hotel_id", hotelId));
 		
+		Bson match = match(Filters.eq("hotel_id", hotelId));
 		Bson project = project(Projections.fields(Projections.excludeId(), 
 				Projections.include("start_date", "num_nights")));
 		AggregateIterable<Document> results = orderDocs.aggregate(Arrays.asList(match, project));
+		
 		int roomsAvailable = theHotel.getName().numRooms;
 
 		for (Document d: results)
@@ -179,7 +180,7 @@ public class ReservationDAO {
 		MongoCollection<Document> hotelDocs = DB.getCollection("hotels");
 		List<Document> results = hotelDocs.aggregate(Arrays.asList(unwind, group, project, sort))
 				.into(new ArrayList<>());
-		results.forEach(printDocuments());
+		results.forEach(t->System.out.println(t.getString("name")+": "+t.getDouble("totalIncome")));
 		
 	}
 	
@@ -190,7 +191,7 @@ public class ReservationDAO {
 		Bson project = project(Projections.fields(Projections.excludeId(),
 				Projections.include("totalOrdersPrice")));
 		List<Document> result = orderDocs.aggregate(Arrays.asList(group, project)).into(new ArrayList<>());
-		result.forEach(printDocuments());
+		System.out.println("Total price of all orders: "+result.get(0).getDouble("totalOrdersPrice"));
 	}
 	
 	
@@ -203,17 +204,15 @@ public class ReservationDAO {
 		AggregateIterable<Document> results = orderDocs.aggregate(Arrays.asList(project));
 		
 		Map<Month, Double> profitsByMonth = new HashMap<>();
-
+		for (Month m: Month.values())
+			profitsByMonth.put(m, 0.0);
 		for (Document d: results)
 		{
 			Date current = d.getDate("start_date");
 			LocalDate startDate = new java.sql.Date(current.getTime()).toLocalDate();
 			Month month = startDate.getMonth();
 			double price = d.getDouble("total_price");
-			if (profitsByMonth.containsKey(month))
-				profitsByMonth.put(month, profitsByMonth.get(month)+price);
-			else
-				profitsByMonth.put(month,price);
+			profitsByMonth.put(month, profitsByMonth.get(month)+price);
 		}
 		
 		List<Entry<Month, Double>> sortedDesc = profitsByMonth.entrySet().stream().sorted((t1,t2)->Double.compare(t2.getValue(), t1.getValue())).collect(Collectors.toList());
