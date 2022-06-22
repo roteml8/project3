@@ -59,7 +59,7 @@ public class Runner {
 //			ObjectId orderToCancel = dao.getAllOrders().get(0).getId();
 //			dao.cancelOrder(orderToCancel);
 //			dao.displayHotelsByIncomeDesc();
-			dao.getAllOrdersTotalPrice();
+			dao.displayAllOrdersTotalPrice();
 		}
 	}
 

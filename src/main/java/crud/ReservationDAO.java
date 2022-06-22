@@ -145,13 +145,13 @@ public class ReservationDAO {
 		
 	}
 	
-	public void getAllOrdersTotalPrice()
+	public void displayAllOrdersTotalPrice()
 	{
 		MongoCollection<Document> orderDocs = DB.getCollection("orders");
-		Bson sum = sum("totalPrice", "$total_price").getValue();
-		Bson project = project(Projections.fields(
-				Projections.include("totalPrice")));
-		List<Document> result = orderDocs.aggregate(Arrays.asList(sum, project)).into(new ArrayList<>());
+		Bson group = group(null, sum("totalOrdersPrice", "$total_price"));
+		Bson project = project(Projections.fields(Projections.excludeId(),
+				Projections.include("totalOrdersPrice")));
+		List<Document> result = orderDocs.aggregate(Arrays.asList(group, project)).into(new ArrayList<>());
 		result.forEach(printDocuments());
 	}
 	
