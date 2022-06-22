@@ -77,7 +77,7 @@ public class DBInitializer {
 		List<Hotel> hotels = dao.getAllHotels();
 		List<Customer> customers = dao.getAllCustomers();
 		LocalDate today = LocalDate.now();
-		final int NUM_ORDERS = 5;
+		final int NUM_ORDERS = 1;
 		for (int i=0; i<NUM_ORDERS; i++)
 		{
 			int numHotel = (int)(Math.random()*hotels.size());

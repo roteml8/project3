@@ -17,10 +17,19 @@ import com.mongodb.client.result.InsertOneResult;
 import static com.mongodb.client.model.Updates.*;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Accumulators.sum;
 import models.Customer;
@@ -74,16 +83,17 @@ public class ReservationDAO {
 	
 	public InsertOneResult addNewOrder(Order order)
 	{
-		Hotel theHotel = getHotelById(order.getHotelId());
+		ObjectId hotelId = order.getHotelId();
+		Hotel theHotel = getHotelById(hotelId);
 		InsertOneResult result = null;
-		if (isHotelAvailable(order.getHotelId(), order.getStartDate(), order.getNumPeople()))
+		if (isHotelAvailable(hotelId, order.getStartDate(), order.getNumPeople()))
 		{
 			order.setTotalPrice(order.getNumNights() * theHotel.getPricePerNight());
 			result = orders.insertOne(order);
 			ObjectId orderId = result.getInsertedId().asObjectId().getValue();
 			order.setId(orderId);
 			Bson updateHotel = addToSet("orders", order);
-			hotels.updateOne(Filters.eq("_id",theHotel.getId()), updateHotel);
+			hotels.updateOne(Filters.eq("_id",hotelId), updateHotel);
 			Bson updateCustomer = addToSet("orders", order);
 			customers.updateOne(Filters.eq("_id", order.getCustomerId()), updateCustomer);
 			
@@ -92,21 +102,49 @@ public class ReservationDAO {
 		return result;
 	}
 	
-	public boolean isHotelAvailable(ObjectId hotelId, LocalDate date, int numPeople)
+	public boolean isHotelAvailable2(ObjectId hotelId, LocalDate date, int numPeople)
 	{
 		Hotel theHotel = getHotelById(hotelId);
 		if (theHotel.getName().roomCapacity < numPeople)
 			return false;
-		List<Order> orders = theHotel.getOrders();
+		List<Order> hotelOrders = orders.find(Filters.eq("hotel_id", hotelId)).into(new ArrayList<>());
 		int numRooms = theHotel.getName().numRooms;
 		int countAvailable = numRooms;
-		for (Order order: orders)
+		for (Order order: hotelOrders)
 		{
 			LocalDate orderEndDate = order.getStartDate().plusDays(order.getNumNights());
 			if (order.getStartDate().equals(date) || (order.getStartDate().isBefore(date) && orderEndDate.isAfter(date)))
 				countAvailable--;
 		}
 		return countAvailable > 0;
+
+	}
+	
+	public boolean isHotelAvailable(ObjectId hotelId, LocalDate date, int numPeople)
+	{
+		Hotel theHotel = getHotelById(hotelId);
+		if (theHotel.getName().roomCapacity < numPeople) 
+			return false;
+		
+		MongoCollection<Document> orderDocs = DB.getCollection("orders");
+		Bson match = match(Filters.eq("hotel_id", hotelId));
+		
+		Bson project = project(Projections.fields(Projections.excludeId(), 
+				Projections.include("start_date", "num_nights")));
+		AggregateIterable<Document> results = orderDocs.aggregate(Arrays.asList(match, project));
+		int roomsAvailable = theHotel.getName().numRooms;
+
+		for (Document d: results)
+		{
+			Date current = d.getDate("start_date");
+			LocalDate startDate = new java.sql.Date(current.getTime()).toLocalDate();
+			int nights = d.getInteger("num_nights");
+			LocalDate endDate = startDate.plusDays(nights);
+			if (startDate.equals(date) || (startDate.isBefore(date) && endDate.isAfter(date)))
+				roomsAvailable--;
+		}
+		
+		return roomsAvailable > 0;
 
 	}
 	
@@ -155,7 +193,60 @@ public class ReservationDAO {
 		result.forEach(printDocuments());
 	}
 	
+	public void displayTopMostProfitableMonths(int top)
+	{
+		Map<Month, Double> incomeByMonth = new HashMap<>();
+		
+//		MongoCollection<Document> orderDocs = DB.getCollection("orders");
+//		Bson group = group("$month:$start_date", sum("totalIncome","$total_price"));
+//		Bson sort = sort(Sorts.descending("totalIncome"));
+//		Bson limit = Aggregates.limit(top);
+//		Bson project = project(Projections.fields(Projections.excludeId(),
+//				Projections.include("month", "totalIncome")));
+//		List<Document> result = orderDocs.aggregate(Arrays.asList(group,sort, limit, project)).into(new ArrayList<>());
+//		result.forEach(printDocuments());
+		for (Order o: getAllOrders())
+		{
+			Month month = o.getStartDate().getMonth();
+			if (incomeByMonth.containsKey(month))
+				incomeByMonth.put(month, incomeByMonth.get(month)+o.getTotalPrice());
+			else
+				incomeByMonth.put(month, o.getTotalPrice());
+		}
+		List<Entry<Month, Double>> sortedDesc = incomeByMonth.entrySet().stream().sorted((t1,t2)->Double.compare(t2.getValue(), t1.getValue())).collect(Collectors.toList());
+
+		for (int i=0; i<top; i++)
+			System.out.println(sortedDesc.get(i));
+	}
+	
+	public void displayTopMostProfitableMonths2(int top)
+	{
+		Map<Month, Double> incomeByMonth = new HashMap<>();
+		
+//		MongoCollection<Document> orderDocs = DB.getCollection("orders");
+//		Bson group = group("$month:$start_date", sum("totalIncome","$total_price"));
+//		Bson sort = sort(Sorts.descending("totalIncome"));
+//		Bson limit = Aggregates.limit(top);
+//		Bson project = project(Projections.fields(Projections.excludeId(),
+//				Projections.include("month", "totalIncome")));
+//		List<Document> result = orderDocs.aggregate(Arrays.asList(group,sort, limit, project)).into(new ArrayList<>());
+//		result.forEach(printDocuments());
+		for (Order o: getAllOrders())
+		{
+			Month month = o.getStartDate().getMonth();
+			if (incomeByMonth.containsKey(month))
+				incomeByMonth.put(month, incomeByMonth.get(month)+o.getTotalPrice());
+			else
+				incomeByMonth.put(month, o.getTotalPrice());
+		}
+		List<Entry<Month, Double>> sortedDesc = incomeByMonth.entrySet().stream().sorted((t1,t2)->Double.compare(t2.getValue(), t1.getValue())).collect(Collectors.toList());
+
+		for (int i=0; i<top; i++)
+			System.out.println(sortedDesc.get(i));
+	}
+	
 	private static Consumer<Document> printDocuments() {
 		return doc -> System.out.println(doc.toJson(JsonWriterSettings.builder().indent(true).build()));
 	}
+	
 }
