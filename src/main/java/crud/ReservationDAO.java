@@ -102,24 +102,6 @@ public class ReservationDAO {
 		return result;
 	}
 	
-	public boolean isHotelAvailable2(ObjectId hotelId, LocalDate date, int numPeople)
-	{
-		Hotel theHotel = getHotelById(hotelId);
-		if (theHotel.getName().roomCapacity < numPeople)
-			return false;
-		List<Order> hotelOrders = orders.find(Filters.eq("hotel_id", hotelId)).into(new ArrayList<>());
-		int numRooms = theHotel.getName().numRooms;
-		int countAvailable = numRooms;
-		for (Order order: hotelOrders)
-		{
-			LocalDate orderEndDate = order.getStartDate().plusDays(order.getNumNights());
-			if (order.getStartDate().equals(date) || (order.getStartDate().isBefore(date) && orderEndDate.isAfter(date)))
-				countAvailable--;
-		}
-		return countAvailable > 0;
-
-	}
-	
 	public boolean isHotelAvailable(ObjectId hotelId, LocalDate date, int numPeople)
 	{
 		Hotel theHotel = getHotelById(hotelId);
@@ -221,8 +203,5 @@ public class ReservationDAO {
 			System.out.println(sortedDesc.get(i));
 	}
 	
-	private static Consumer<Document> printDocuments() {
-		return doc -> System.out.println(doc.toJson(JsonWriterSettings.builder().indent(true).build()));
-	}
 	
 }
