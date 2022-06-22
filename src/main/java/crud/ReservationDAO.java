@@ -111,8 +111,9 @@ public class ReservationDAO {
 		MongoCollection<Document> orderDocs = DB.getCollection("orders");
 		LocalDate endDate = date.plusDays(numNights);
 
-		Bson match = match(and(eq("hotel_id", hotelId), 
-				or(lte("start_date", date), lt("start_date", endDate))));
+		// get all orders hotels that start before the given order ends
+		Bson match = match(and(eq("hotel_id", hotelId),
+				 lt("start_date", endDate)));
 		
 		Bson project = project(Projections.fields(Projections.excludeId(), 
 				Projections.include("start_date", "num_nights")));
@@ -126,7 +127,11 @@ public class ReservationDAO {
 			LocalDate currentStartDate = new java.sql.Date(current.getTime()).toLocalDate();
 			int nights = d.getInteger("num_nights");
 			LocalDate currentEndDate = currentStartDate.plusDays(nights);
-			if (currentStartDate.equals(date) || currentEndDate.isAfter(date) || currentEndDate.isAfter(endDate))
+			// 3 options:
+			// 1. the current order starts at the same day as the given order
+			// 2. the current order starts before the given order, and ends after the given order starts
+			// 3. the current order starts during the given order
+			if (currentStartDate.equals(date) || currentEndDate.isAfter(date) || currentStartDate.isAfter(date))
 				roomsAvailable--;
 		}
 		

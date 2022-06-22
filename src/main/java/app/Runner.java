@@ -57,18 +57,18 @@ public class Runner {
 //			myOrders.forEach(System.out::println);
 //			List<Hotel> hotelsInTlv = dao.getHotelsByCity("Tel Aviv");
 //			hotelsInTlv.forEach(System.out::println);
-//			dao.cancelOrder(new ObjectId("62b3408e3b8b241134f71840"));
+//			dao.cancelOrder(new ObjectId("62b38ab87f70847ec135e718"));
 //			ObjectId orderToCancel = new ObjectId("62b30702333c284912c3e90d");
 //			dao.cancelOrder(orderToCancel);
-			dao.displayHotelsByIncomeDesc();
-			dao.displayAllOrdersTotalPrice();
-			dao.displayTopMostProfitableMonths(3);
-//			ObjectId belloId = new ObjectId("62b2d654348a7351f52546d9");
-//			ObjectId customerId = new ObjectId("62b2d6406ce1bb0bda3f7c68");
-//			LocalDate existingDate = LocalDate.of(2023, 5, 23);
-//			LocalDate existingDate = LocalDate.of(2023, 5, 22);
-//			Order newOrder = new Order(belloId, customerId, LocalDate.now(), existingDate, 2 , 1);
-//			dao.addNewOrder(newOrder);
+//			dao.displayHotelsByIncomeDesc();
+//			dao.displayAllOrdersTotalPrice();
+//			dao.displayTopMostProfitableMonths(3);
+			ObjectId belloId = new ObjectId("62b2d654348a7351f52546d9");
+			ObjectId customerId = new ObjectId("62b2d6406ce1bb0bda3f7c68");
+			LocalDate existingDate = LocalDate.of(2023, 5, 25);
+//			LocalDate existingDate = LocalDate.of(2023, 5, 24);
+			Order newOrder = new Order(belloId, customerId, LocalDate.now(), existingDate, 2 , 1);
+			dao.addNewOrder(newOrder);
 		}
 	}
 
