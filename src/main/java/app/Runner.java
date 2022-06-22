@@ -50,7 +50,7 @@ public class Runner {
 			MongoDatabase DB = mongoClient.getDatabase("Reservations");
 //			DBInitializer.createCustomersCollection(DB);
 //			DBInitializer.createHotelsCollection(DB);
-			DBInitializer.createOrdersCollection(DB);
+//			DBInitializer.createOrdersCollection(DB);
 			ReservationDAO dao = new ReservationDAO(DB);
 //			dao.isHotelAvailable2(new ObjectId("62b2d654348a7351f52546db"), null, 0);
 //			List<Order> myOrders = dao.getOrdersByCustomer(new ObjectId("62b2d6406ce1bb0bda3f7c68"));
@@ -60,7 +60,7 @@ public class Runner {
 //			dao.cancelOrder(new ObjectId("62b20550d3ef192212d64d05"));
 //			ObjectId orderToCancel = new ObjectId("62b30702333c284912c3e90d");
 //			dao.cancelOrder(orderToCancel);
-//			dao.displayHotelsByIncomeDesc();
+			dao.displayHotelsByIncomeDesc();
 //			dao.displayAllOrdersTotalPrice();
 //			dao.displayTopMostProfitableMonths(3);
 //			ObjectId hotelId = new ObjectId("62b2d654348a7351f52546db");
@@ -68,6 +68,7 @@ public class Runner {
 //			LocalDate existingDate = LocalDate.of(2024, 1, 27);
 //			Order newOrder = new Order(hotelId, customerId, LocalDate.now(), existingDate, 2, 1);
 //			dao.addNewOrder(newOrder);
+//			dao.displayTopMostProfitableMonths(3);
 		}
 	}
 

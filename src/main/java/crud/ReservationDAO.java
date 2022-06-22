@@ -193,53 +193,30 @@ public class ReservationDAO {
 		result.forEach(printDocuments());
 	}
 	
+	
 	public void displayTopMostProfitableMonths(int top)
 	{
-		Map<Month, Double> incomeByMonth = new HashMap<>();
+		MongoCollection<Document> orderDocs = DB.getCollection("orders");
 		
-//		MongoCollection<Document> orderDocs = DB.getCollection("orders");
-//		Bson group = group("$month:$start_date", sum("totalIncome","$total_price"));
-//		Bson sort = sort(Sorts.descending("totalIncome"));
-//		Bson limit = Aggregates.limit(top);
-//		Bson project = project(Projections.fields(Projections.excludeId(),
-//				Projections.include("month", "totalIncome")));
-//		List<Document> result = orderDocs.aggregate(Arrays.asList(group,sort, limit, project)).into(new ArrayList<>());
-//		result.forEach(printDocuments());
-		for (Order o: getAllOrders())
-		{
-			Month month = o.getStartDate().getMonth();
-			if (incomeByMonth.containsKey(month))
-				incomeByMonth.put(month, incomeByMonth.get(month)+o.getTotalPrice());
-			else
-				incomeByMonth.put(month, o.getTotalPrice());
-		}
-		List<Entry<Month, Double>> sortedDesc = incomeByMonth.entrySet().stream().sorted((t1,t2)->Double.compare(t2.getValue(), t1.getValue())).collect(Collectors.toList());
+		Bson project = project(Projections.fields(Projections.excludeId(), 
+				Projections.include("start_date", "total_price")));
+		AggregateIterable<Document> results = orderDocs.aggregate(Arrays.asList(project));
+		
+		Map<Month, Double> profitsByMonth = new HashMap<>();
 
-		for (int i=0; i<top; i++)
-			System.out.println(sortedDesc.get(i));
-	}
-	
-	public void displayTopMostProfitableMonths2(int top)
-	{
-		Map<Month, Double> incomeByMonth = new HashMap<>();
-		
-//		MongoCollection<Document> orderDocs = DB.getCollection("orders");
-//		Bson group = group("$month:$start_date", sum("totalIncome","$total_price"));
-//		Bson sort = sort(Sorts.descending("totalIncome"));
-//		Bson limit = Aggregates.limit(top);
-//		Bson project = project(Projections.fields(Projections.excludeId(),
-//				Projections.include("month", "totalIncome")));
-//		List<Document> result = orderDocs.aggregate(Arrays.asList(group,sort, limit, project)).into(new ArrayList<>());
-//		result.forEach(printDocuments());
-		for (Order o: getAllOrders())
+		for (Document d: results)
 		{
-			Month month = o.getStartDate().getMonth();
-			if (incomeByMonth.containsKey(month))
-				incomeByMonth.put(month, incomeByMonth.get(month)+o.getTotalPrice());
+			Date current = d.getDate("start_date");
+			LocalDate startDate = new java.sql.Date(current.getTime()).toLocalDate();
+			Month month = startDate.getMonth();
+			double price = d.getDouble("total_price");
+			if (profitsByMonth.containsKey(month))
+				profitsByMonth.put(month, profitsByMonth.get(month)+price);
 			else
-				incomeByMonth.put(month, o.getTotalPrice());
+				profitsByMonth.put(month,price);
 		}
-		List<Entry<Month, Double>> sortedDesc = incomeByMonth.entrySet().stream().sorted((t1,t2)->Double.compare(t2.getValue(), t1.getValue())).collect(Collectors.toList());
+		
+		List<Entry<Month, Double>> sortedDesc = profitsByMonth.entrySet().stream().sorted((t1,t2)->Double.compare(t2.getValue(), t1.getValue())).collect(Collectors.toList());
 
 		for (int i=0; i<top; i++)
 			System.out.println(sortedDesc.get(i));
