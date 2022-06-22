@@ -76,22 +76,23 @@ public class DBInitializer {
 		ReservationDAO dao = new ReservationDAO(DB);
 		List<Hotel> hotels = dao.getAllHotels();
 		List<Customer> customers = dao.getAllCustomers();
-		
-		ObjectId hotel1Id = hotels.get(0).getId();
-		ObjectId hotel2Id = hotels.get(1).getId();
-		ObjectId hotel3Id = hotels.get(2).getId();
-	
-		ObjectId cust1Id = customers.get(0).getId();
-		ObjectId cust2Id = customers.get(1).getId();
-		ObjectId cust3Id = customers.get(2).getId();
-		
 		LocalDate today = LocalDate.now();
-		Order order1 = new Order(hotel1Id, cust1Id, today, LocalDate.of(2022, 8, 8), 5, 2);
-		Order order2 = new Order(hotel2Id, cust2Id, today, LocalDate.of(2023, 1, 1), 2, 2);
-		Order order3 = new Order(hotel3Id, cust3Id, today, LocalDate.of(2022, 9, 13), 7, 3);
-		dao.addNewOrder(order1);
-		dao.addNewOrder(order2);
-		dao.addNewOrder(order3);
+		final int NUM_ORDERS = 5;
+		for (int i=0; i<NUM_ORDERS; i++)
+		{
+			int numHotel = (int)(Math.random()*hotels.size());
+			int numCust = (int)(Math.random()*customers.size());
+			ObjectId hotelId = hotels.get(numHotel).getId();
+			ObjectId custId = customers.get(numCust).getId();
+			int randomYear = (int) (Math.random()*3 + 2023);
+			int randomMonth = (int) (Math.random()*12 + 1);
+			int randomDay = (int) (Math.random()*28 +1);
+			LocalDate date = LocalDate.of(randomYear, randomMonth, randomDay);
+			int randomNumPeople = (int) (Math.random()*4 + 1);
+			int randomNumNights = (int) (Math.random()*7 + 1);
+			Order order = new Order(hotelId, custId, today, date, randomNumNights, randomNumPeople);
+			dao.addNewOrder(order);
+		}
 	}
 
 }

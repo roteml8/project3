@@ -1,21 +1,33 @@
 package crud;
 
+import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
 
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.InsertOneResult;
 import static com.mongodb.client.model.Updates.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
+import static com.mongodb.client.model.Accumulators.sum;
 import models.Customer;
 import models.Hotel;
 import models.Order;
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Accumulators.first;
 
 public class ReservationDAO {
 	
@@ -90,7 +102,8 @@ public class ReservationDAO {
 		int countAvailable = numRooms;
 		for (Order order: orders)
 		{
-			if (order.getStartDate().isBefore(date) && order.getStartDate().plusDays(order.getNumNights()).isAfter(date))
+			LocalDate orderEndDate = order.getStartDate().plusDays(order.getNumNights());
+			if (order.getStartDate().equals(date) || (order.getStartDate().isBefore(date) && orderEndDate.isAfter(date)))
 				countAvailable--;
 		}
 		return countAvailable > 0;
@@ -118,4 +131,31 @@ public class ReservationDAO {
 		customers.updateOne(Filters.eq("_id", theOrder.getCustomerId()), updateCustomer);
 	}
 
+	public void displayHotelsByIncomeDesc()
+	{
+		Bson unwind = Aggregates.unwind("$orders");
+		Bson group = group("$_id", sum("totalIncome", "$orders.total_price"), first("name", "$name"));
+		Bson sort = sort(Sorts.descending("totalIncome"));
+		Bson project = project(Projections.fields(
+				Projections.include("_id", "name", "totalIncome")));
+		MongoCollection<Document> hotelDocs = DB.getCollection("hotels");
+		List<Document> results = hotelDocs.aggregate(Arrays.asList(unwind, group, project, sort))
+				.into(new ArrayList<>());
+		results.forEach(printDocuments());
+		
+	}
+	
+	public void getAllOrdersTotalPrice()
+	{
+		MongoCollection<Document> orderDocs = DB.getCollection("orders");
+		Bson sum = sum("totalPrice", "$total_price").getValue();
+		Bson project = project(Projections.fields(
+				Projections.include("totalPrice")));
+		List<Document> result = orderDocs.aggregate(Arrays.asList(sum, project)).into(new ArrayList<>());
+		result.forEach(printDocuments());
+	}
+	
+	private static Consumer<Document> printDocuments() {
+		return doc -> System.out.println(doc.toJson(JsonWriterSettings.builder().indent(true).build()));
+	}
 }
