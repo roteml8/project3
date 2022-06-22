@@ -49,13 +49,15 @@ public class Runner {
 			MongoDatabase DB = mongoClient.getDatabase("Reservations");
 //			DBInitializer.createCustomersCollection(DB);
 //			DBInitializer.createHotelsCollection(DB);
-			DBInitializer.createOrdersCollection(DB);
+//			DBInitializer.createOrdersCollection(DB);
 			ReservationDAO dao = new ReservationDAO(DB);
 //			List<Order> myOrders = dao.getOrdersByCustomer(new ObjectId("62b1d2cdc812d6268b6f7407"));
 //			myOrders.forEach(System.out::println);
 //			List<Hotel> hotelsInTlv = dao.getHotelsByCity("Tel Aviv");
 //			hotelsInTlv.forEach(System.out::println);
 //			dao.cancelOrder(new ObjectId("62b20550d3ef192212d64d05"));
+//			ObjectId orderToCancel = dao.getAllOrders().get(0).getId();
+//			dao.cancelOrder(orderToCancel);
 		}
 	}
 

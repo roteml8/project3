@@ -25,7 +25,6 @@ import models.Room;
 public class DBInitializer {
 	
 
-
 	public static InsertManyResult createCustomersCollection(MongoDatabase DB)
 	{
 		MongoCollection<Document> collection = DB.getCollection("customers");
@@ -74,22 +73,25 @@ public class DBInitializer {
 	
 	public static void createOrdersCollection(MongoDatabase DB)
 	{
-		ObjectId hermosoId = new ObjectId("62b1f06f1e06fe398fb667de");
-		ObjectId lindoId = new ObjectId("62b1f06f1e06fe398fb667dd");
-		ObjectId belloId = new ObjectId("62b1f06f1e06fe398fb667dc");
+		ReservationDAO dao = new ReservationDAO(DB);
+		List<Hotel> hotels = dao.getAllHotels();
+		List<Customer> customers = dao.getAllCustomers();
 		
-		ObjectId cust1Id = new ObjectId("62b1d2cdc812d6268b6f7407");
-		ObjectId cust2Id = new ObjectId("62b1d2cdc812d6268b6f7408");
-		ObjectId cust3Id = new ObjectId("62b1d2cdc812d6268b6f7409");
+		ObjectId hotel1Id = hotels.get(0).getId();
+		ObjectId hotel2Id = hotels.get(1).getId();
+		ObjectId hotel3Id = hotels.get(2).getId();
+	
+		ObjectId cust1Id = customers.get(0).getId();
+		ObjectId cust2Id = customers.get(1).getId();
+		ObjectId cust3Id = customers.get(2).getId();
 		
 		LocalDate today = LocalDate.now();
-		Order order1 = new Order(hermosoId, cust1Id, today, LocalDate.of(2022, 8, 8), 5, 2);
-		Order order2 = new Order(lindoId, cust2Id, today, LocalDate.of(2023, 1, 1), 2, 2);
-		Order order3 = new Order(belloId, cust3Id, today, LocalDate.of(2022, 9, 13), 7, 3);
-		ReservationDAO dao = new ReservationDAO(DB);
-//		dao.addNewOrder(order1);
+		Order order1 = new Order(hotel1Id, cust1Id, today, LocalDate.of(2022, 8, 8), 5, 2);
+		Order order2 = new Order(hotel2Id, cust2Id, today, LocalDate.of(2023, 1, 1), 2, 2);
+		Order order3 = new Order(hotel3Id, cust3Id, today, LocalDate.of(2022, 9, 13), 7, 3);
+		dao.addNewOrder(order1);
 		dao.addNewOrder(order2);
-//		dao.addNewOrder(order3);
+		dao.addNewOrder(order3);
 	}
 
 }

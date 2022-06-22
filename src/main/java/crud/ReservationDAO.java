@@ -33,6 +33,21 @@ public class ReservationDAO {
 		
 	}
 	
+	public List<Hotel> getAllHotels()
+	{
+		return hotels.find().into(new ArrayList<>());
+	}
+	
+	public List<Order> getAllOrders()
+	{
+		return orders.find().into(new ArrayList<>());
+	}
+	
+	public List<Customer> getAllCustomers()
+	{
+		return customers.find().into(new ArrayList<>());
+	}
+	
 	public Hotel getHotelById(ObjectId id)
 	{
 		Hotel current = hotels.find(Filters.eq("_id",id)).first();
@@ -52,11 +67,14 @@ public class ReservationDAO {
 		if (isHotelAvailable(order.getHotelId(), order.getStartDate(), order.getNumPeople()))
 		{
 			order.setTotalPrice(order.getNumNights() * theHotel.getPricePerNight());
+			result = orders.insertOne(order);
+			ObjectId orderId = result.getInsertedId().asObjectId().getValue();
+			order.setId(orderId);
 			Bson updateHotel = addToSet("orders", order);
 			hotels.updateOne(Filters.eq("_id",theHotel.getId()), updateHotel);
 			Bson updateCustomer = addToSet("orders", order);
 			customers.updateOne(Filters.eq("_id", order.getCustomerId()), updateCustomer);
-			result = orders.insertOne(order);
+			
 		}
 
 		return result;
@@ -94,7 +112,7 @@ public class ReservationDAO {
 	public void cancelOrder(ObjectId orderId)
 	{
 		Order theOrder = orders.findOneAndDelete(Filters.eq("_id", orderId));
-		Bson updateHotel = pull("orders", theOrder);
+		Bson updateHotel = pull("orders",theOrder);
 		hotels.updateOne(Filters.eq("_id", theOrder.getHotelId()), updateHotel);
 		Bson updateCustomer = pull("orders", theOrder);
 		customers.updateOne(Filters.eq("_id", theOrder.getCustomerId()), updateCustomer);
